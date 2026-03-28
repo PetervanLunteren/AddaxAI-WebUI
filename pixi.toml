@@ -1,0 +1,43 @@
+[workspace]
+name = "addaxai-webui"
+authors = ["Peter van Lunteren <peter@addaxdatascience.com>"]
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-arm64", "osx-64", "win-64"]
+
+[dependencies]
+python = ">=3.12,<3.14"
+nodejs = ">=20"
+pip = ">=23"
+uvicorn = ">=0.42"
+alembic = ">=1.18.4"
+honcho = ">=1.1.0"
+
+[tasks]
+# --- Setup ---
+clean = "rm -rf backend/venv frontend/node_modules"
+
+pip-install = { cmd = "pip install -r requirements.txt", cwd = "backend" }
+migrate = { cmd = "alembic upgrade head", cwd = "backend", env = { PYTHONPATH = "." }, depends-on = ["pip-install"] }
+setup-backend = { depends-on = ["migrate"]}
+
+setup-frontend = { cmd = "npm install", cwd = "frontend" }
+setup-procfile = """
+printf 'backend: pixi run backend \nifrontend: pixi run frontend' > Procfile
+"""
+
+install = { depends-on = ["setup-backend", "setup-frontend", "setup-procfile"] }
+
+# --- Run ---
+
+backend = { cmd = "uvicorn app.main:app --reload", cwd = "backend" }
+frontend = { cmd = "npm run dev", cwd = "frontend" }
+
+# Runs backend + frontend in parallel 
+dev = "honcho start"
+
+[feature.dev.dependencies]
+
+
+[environments]
+default = { solve-group = "default" }
+dev = { features = ["dev"], solve-group = "default" }

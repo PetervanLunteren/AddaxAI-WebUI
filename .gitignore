@@ -89,3 +89,6 @@ alembic/versions/*.pyc
 *.db
 *.db-wal
 *.db-shm
+
+# Honcho 
+Procfile
